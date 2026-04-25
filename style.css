@@ -1,0 +1,113 @@
+:root {
+    --bg-base: #030816;
+    --gub-blue: #0b3d70; 
+    --gub-accent: #00f0ff; 
+    --gub-red: #ff2e4d;
+    --text-main: #e0f8ff;
+    --text-dim: #4d88b3;
+    --box-border: rgba(0, 240, 255, 0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { background-color: var(--bg-base); color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; overflow-y: auto; position: relative; }
+
+#network-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+.scanlines { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; }
+
+.login-container { position: relative; z-index: 10; width: 100%; max-width: 500px; padding: 20px; max-height: 95vh; overflow-y: auto; overflow-x: hidden; }
+.cyber-box { background: rgba(3, 8, 22, 0.85); border: 1px solid var(--box-border); padding: 3rem 2rem; position: relative; box-shadow: 0 0 30px rgba(0, 240, 255, 0.1), inset 0 0 20px rgba(0, 240, 255, 0.05); backdrop-filter: blur(10px); transition: all 0.5s;}
+
+.corner { position: absolute; width: 15px; height: 15px; border: 2px solid var(--gub-accent); transition: border-color 0.5s; }
+.top-left { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.top-right { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+.bottom-left { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+.bottom-right { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+.brand { text-align: center; margin-bottom: 2.5rem; }
+.gub-logo { width: 200px; margin-bottom: 1rem; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+.brand h1 { font-family: 'Share Tech Mono', monospace; font-size: 1.8rem; color: var(--gub-accent); text-shadow: 0 0 10px rgba(0, 240, 255, 0.4); letter-spacing: 2px; }
+.status-blinker { font-family: 'Share Tech Mono', monospace; color: var(--gub-red); font-size: 0.9rem; margin-top: 5px; animation: blink 2s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+.tabs { display: flex; margin-bottom: 2rem; border-bottom: 1px solid rgba(0, 240, 255, 0.2); }
+.tab-btn { flex: 1; background: transparent; border: none; padding: 10px 0; font-family: 'Share Tech Mono', monospace; font-size: 1rem; color: var(--text-dim); cursor: pointer; transition: all 0.3s; }
+.tab-btn.active { color: var(--gub-accent); text-shadow: 0 0 5px var(--gub-accent); box-shadow: inset 0 -2px 0 var(--gub-accent); }
+
+.form-group { margin-bottom: 1.5rem; }
+.form-group label { display: block; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.icon { position: absolute; left: 15px; font-family: 'Share Tech Mono', monospace; color: var(--gub-accent); }
+.input-wrapper input { width: 100%; background: rgba(0, 20, 40, 0.5); border: 1px solid var(--box-border); padding: 12px 15px 12px 35px; color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 1rem; outline: none; transition: all 0.3s; }
+.input-wrapper input:focus { border-color: var(--gub-accent); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2); }
+
+.cyber-btn { width: 100%; background: rgba(0, 240, 255, 0.1); border: 1px solid var(--gub-accent); color: var(--gub-accent); padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; transition: all 0.3s; letter-spacing: 2px; margin-top: 1rem; position: relative; overflow: hidden; }
+.cyber-btn:hover { background: var(--gub-accent); color: #000; box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); }
+
+.hidden { display: none !important; }
+
+.system-message { font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; margin-top: 15px; text-align: center; padding: 10px; border-radius: 4px; }
+.error { color: var(--gub-red); border: 1px dashed var(--gub-red); background: rgba(255, 46, 77, 0.05); }
+.success { color: var(--gub-accent); border: 1px dashed var(--gub-accent); background: rgba(0, 240, 255, 0.05); }
+
+/* --- BIOMETRIC SCANNER STYLES --- */
+.mt-1 { margin-top: 10px; }
+.scanner-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: rgba(0, 5, 20, 0.9);
+    border: 1px dashed var(--gub-red);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    box-shadow: inset 0 0 30px rgba(255, 46, 77, 0.15);
+}
+
+#webcam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.6; 
+    filter: grayscale(80%) sepia(50%) hue-rotate(300deg) saturate(200%);
+}
+
+.scanner-laser {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--gub-red);
+    box-shadow: 0 0 15px var(--gub-red);
+    top: 0;
+    left: 0;
+    animation: scan 1.5s infinite linear alternate;
+    z-index: 2;
+}
+
+@keyframes scan {
+    from { top: 0; }
+    to { top: 100%; }
+}
+
+.scanner-overlay {
+    position: absolute;
+    z-index: 3;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    text-shadow: 0 0 5px var(--gub-red);
+    background: rgba(0,0,0,0.6);
+    padding: 8px 15px;
+    border: 1px solid var(--gub-red);
+}
+
+.admin-mode .cyber-box {
+    border-color: var(--gub-red);
+    box-shadow: 0 0 30px rgba(255, 46, 77, 0.15), inset 0 0 20px rgba(255, 46, 77, 0.05);
+}
+.admin-mode .corner {
+    border-color: var(--gub-red);
+}

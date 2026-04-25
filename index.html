@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUB CSE Virtual Lab | Cyber Access</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+</head>
+<body>
+    <canvas id="network-canvas"></canvas>
+    <div class="scanlines"></div>
+
+    <div class="login-container">
+        <div class="cyber-box">
+            <div class="brand">
+                <img src="logo.png" alt="GUB Logo" class="gub-logo">
+                <h1>GUB // CYBER-LAB</h1>
+                <p class="status-blinker">SYSTEM: ONLINE_</p>
+                <div class="public-stats mt-1" style="margin-top: 10px; border: 1px dashed var(--gub-accent); display: inline-block; padding: 5px 15px; border-radius: 4px; background: rgba(0, 240, 255, 0.05);">
+                    <span style="font-family:'Share Tech Mono'; color:var(--text-main); font-size: 0.85rem;">[ ACTIVE_HACKERS: <strong id="public-node-count" style="color:var(--gub-accent); font-size: 1.1rem;">0</strong> ]</span>
+                </div>
+            </div>
+
+            <div class="auth-card">
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-login">[ LOGIN ]</button>
+                    <button class="tab-btn" id="tab-request">[ REQUEST_ACCESS ]</button>
+                </div>
+
+                <form id="auth-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="reg-number">REGISTRATION_ID</label>
+                        <div class="input-wrapper">
+                            <span class="icon">#</span>
+                            <input type="text" id="reg-number" placeholder="000-000-000" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="password-group">
+                        <label for="password" id="password-label">PASSKEY (STUDENT CLEARANCE)</label>
+                        <div class="input-wrapper">
+                            <span class="icon">*</span>
+                            <input type="password" id="password" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="form-group hidden" id="confirm-password-group">
+                        <label for="confirm-password">CONFIRM PASSKEY</label>
+                        <div class="input-wrapper">
+                            <span class="icon">*</span>
+                            <input type="password" id="confirm-password" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <!-- NEW BIOMETRIC SCANNER FOR ADMINS -->
+                    <div class="form-group hidden" id="biometric-group">
+                        <label class="scan-label" style="color:var(--gub-red); font-family:'Share Tech Mono', monospace;">HIGH CLEARANCE DETECTED // BIOMETRIC REQUIREMENT</label>
+                        <div class="scanner-container mt-1">
+                            <video id="webcam-video" autoplay playsinline muted></video>
+                            <div class="scanner-laser"></div>
+                            <div class="scanner-overlay" id="scanner-overlay">AWAITING VIDEO STREAM...</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group hidden" id="email-group">
+                        <label for="student-email">EMAIL_ADDRESS</label>
+                        <div class="input-wrapper">
+                            <span class="icon">@</span>
+                            <input type="email" id="student-email" placeholder="student@gub.edu.bd">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cyber-btn" id="submit-btn">INITIATE_UPLINK</button>
+                    
+                    <div id="forgot-password-container" style="text-align: center; margin-top: 15px;">
+                        <a href="#" id="forgot-password-btn" style="color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; text-decoration: none; transition: color 0.3s;">[ FORGOT_PASSKEY? ]</a>
+                    </div>
+
+                    <div id="error-message" class="system-message error hidden"></div>
+                    <div id="success-message" class="system-message success hidden"></div>
+                </form>
+            </div>
+            
+            <div class="corner top-left"></div>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
+            <div class="corner bottom-right"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

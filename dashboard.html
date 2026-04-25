@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUB | Admin Protocol</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="brand-mini">
+                <img src="logo.png" alt="GUB Logo">
+                <p>ADMIN_NODE</p>
+                <div class="user-id">251-013-001</div>
+            </div>
+            
+            <ul class="nav-links">
+                <li><button class="nav-btn active" data-target="overview-panel">:: OVERVIEW</button></li>
+                <li><button class="nav-btn" data-target="leaderboard-panel">:: LEADERBOARD</button></li>
+                <li><button class="nav-btn" data-target="directory-panel" style="color: var(--gub-accent);">:: MEMBER_DIRECTORY</button></li>
+                <li><button class="nav-btn" data-target="approvals-panel">:: PENDING_USERS</button></li>
+                <li><button class="nav-btn" data-target="tasks-panel" style="color: var(--gub-yellow);">:: TASKS_&_PROJECTS</button></li>
+                <li><button class="nav-btn" data-target="ai-panel">:: AI_AUTOMATION</button></li>
+                <li><button class="nav-btn" data-target="super-admin-panel" style="color: var(--gub-red);">[!] SUPER_ADMIN [!]</button></li>
+                <li><button class="nav-btn logout-btn" id="logout-btn"><< LOGOUT</button></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            
+            <!-- Panel 1: Overview -->
+            <section id="overview-panel" class="panel active">
+                <header class="panel-header">
+                    <h2>SYSTEM_OVERVIEW</h2>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>ACTIVE_HACKERS</h3>
+                        <div class="number">142</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>PENDING_TASKS</h3>
+                        <div class="number">18</div>
+                    </div>
+                    <div class="stat-card highlight">
+                        <h3>NETWORK_STATUS</h3>
+                        <div class="number">SECURE</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 2: Leaderboard -->
+            <section id="leaderboard-panel" class="panel">
+                <header class="panel-header">
+                    <h2>GLOBAL_RANKINGS</h2>
+                    <p>All identities encrypted.</p>
+                </header>
+                <div class="table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>RANK</th>
+                                <th>USER_NODE</th>
+                                <th>EXP_POINTS</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Dynamic Leaderboard Data -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Panel 3: Approvals -->
+            <section id="approvals-panel" class="panel">
+                <header class="panel-header">
+                    <h2>GATEKEEPER_PROTOCOL</h2>
+                    <p>Approve incoming access requests.</p>
+                </header>
+                <div id="pending-users-list">
+                    <!-- Dynamic Pending Users go here -->
+                </div>
+            </section>
+
+            <!-- Panel 3.5: Member Directory -->
+            <section id="directory-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color: var(--gub-accent);">
+                    <h2 style="color: var(--gub-accent);">MEMBER_DIRECTORY</h2>
+                    <p>Complete roster of all system nodes and their unmasked IDs.</p>
+                </header>
+                <div class="table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>HACKER_ALIAS</th>
+                                <th>EMAIL</th>
+                                <th style="color: var(--gub-accent);">FULL_ID (RAW)</th>
+                                <th>ROLE</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="directory-body">
+                            <!-- Dynamic Directory Data -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Panel 4: Tasks & Projects -->
+            <section id="tasks-panel" class="panel">
+                <header class="panel-header">
+                    <h2 style="color: var(--gub-yellow);">TASK_AND_PROJECTS_UPLINK</h2>
+                    <p>Throw competitions and approve student submissions for EXP.</p>
+                </header>
+
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                    <!-- Create Task Side -->
+                    <div class="approval-card" style="flex-direction: column; align-items: stretch; border-color: var(--gub-yellow);">
+                        <h3 style="color: var(--gub-yellow); margin-bottom: 15px; font-family: 'Share Tech Mono', monospace;">[ DEPLOY NEW TASK ]</h3>
+                        <label class="scan-label" style="font-size: 0.8rem; color:var(--text-dim); margin-bottom:5px; display:block;">MISSION TITLE</label>
+                        <input type="text" id="task-title" class="cyber-input" placeholder="e.g., Build a Python Keylogger" style="margin-bottom: 10px;">
+                        
+                        <label class="scan-label" style="font-size: 0.8rem; color:var(--text-dim); margin-bottom:5px; display:block;">EXP REWARD</label>
+                        <input type="number" id="task-exp" class="cyber-input" placeholder="e.g., 500" style="margin-bottom: 15px;">
+                        
+                        <button class="cyber-btn" id="deploy-task-btn" style="border-color: var(--gub-yellow); color: var(--gub-yellow);">BROADCAST MISSION</button>
+                        <div id="task-log" class="system-message hidden" style="margin-top: 10px; color: var(--gub-yellow); border:1px dashed var(--gub-yellow);"></div>
+                    </div>
+
+                    <!-- Active Tasks List -->
+                    <div class="approval-card" style="flex-direction: column; align-items: stretch; background: rgba(0,0,0,0.5);">
+                        <h3 style="color: var(--text-dim); margin-bottom: 15px; font-family: 'Share Tech Mono', monospace;">[ ACTIVE MISSIONS ]</h3>
+                        
+                        <div id="active-tasks-list">
+                            <!-- Dynamic Active Tasks go here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grading Submissions section -->
+                <h3 style="margin-top: 30px; margin-bottom: 15px; color: var(--gub-accent); font-family: 'Share Tech Mono', monospace;">[ PENDING SUBMISSIONS FOR REVIEW ]</h3>
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>STUDENT_NODE</th>
+                            <th>MISSION</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grading-table-body">
+                        <!-- Dynamic Submissions Injected Here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Panel 5: AI Automation -->
+            <section id="ai-panel" class="panel">
+                <header class="panel-header">
+                    <h2>AI_COMM_UPLINK</h2>
+                    <p>Generate automated announcements using Neural Net.</p>
+                </header>
+                <div class="ai-interface">
+                    <label>INPUT_PROMPT > </label>
+                    <textarea class="cyber-input textarea" id="ai-prompt" placeholder="e.g., Tell students the web challenge deadline is tomorrow..."></textarea>
+                    <button class="cyber-btn mt-1" id="generate-ai-btn">GENERATE_MESSAGE</button>
+                    
+                    <div class="ai-output hidden" id="ai-output-box">
+                        <div class="output-header">[ SYS.AI OUTPUT ]</div>
+                        <p id="ai-result-text"></p>
+                        <button class="cyber-btn accept mt-1">BROADCAST_TO_ALL</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 5: Super Admin Control Center -->
+            <section id="super-admin-panel" class="panel" style="border: 1px dashed var(--gub-red); padding: 20px; background: rgba(255, 0, 0, 0.05);">
+                <header class="panel-header" style="border-bottom-color: var(--gub-red);">
+                    <h2 style="color: var(--gub-red);">SUPER ADMIN COMMAND CENTER</h2>
+                    <p style="color: var(--text-main);">WARNING: Absolute power. Actions taken here are permanent.</p>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="approval-card" style="flex-direction: column; align-items: stretch; border-color: var(--gub-accent);">
+                        <h3 style="color: var(--gub-accent); margin-bottom: 10px; font-family: 'Share Tech Mono', monospace;">[ APPOINT NEW TEACHER ]</h3>
+                        <input type="text" class="cyber-input" id="promote-id" placeholder="Enter Registration ID..." style="margin-bottom: 15px;">
+                        <button class="cyber-btn" id="promote-btn" style="border-color: var(--gub-accent); color: var(--gub-accent);">PROMOTE TO TEACHER STATUS</button>
+                    </div>
+
+                    <div class="approval-card" style="flex-direction: column; align-items: stretch; border-color: var(--gub-red);">
+                        <h3 style="color: var(--gub-red); margin-bottom: 10px; font-family: 'Share Tech Mono', monospace;">[ THE BAN HAMMER ]</h3>
+                        <input type="text" class="cyber-input" id="ban-id" placeholder="Enter Registration ID..." style="margin-bottom: 15px; border-color: var(--gub-red);">
+                        <button class="cyber-btn reject" id="ban-btn" style="background: rgba(255,0,0,0.1);">PERMANENTLY DELETE USER</button>
+                    </div>
+                </div>
+
+                <!-- AI BIOMETRIC ENROLLMENT -->
+                <div style="margin-top: 20px; border: 1px solid #00f0ff; padding: 20px; border-radius: 5px; text-align: center; background: rgba(0, 240, 255, 0.05);">
+                    <h3 style="color: #00f0ff; font-family: 'Share Tech Mono', monospace; margin-bottom: 10px;">[ AI BIOMETRIC ENROLLMENT ]</h3>
+                    <p style="color: var(--text-dim); margin-bottom: 15px;">Map your physical face DNA to your Master Account.</p>
+                    
+                    <div id="enroll-video-container" class="hidden" style="position: relative; width: 320px; height: 240px; margin: 0 auto 15px; border: 2px dashed #00f0ff;">
+                        <video id="enroll-video" width="320" height="240" autoplay muted style="object-fit: cover;"></video>
+                    </div>
+
+                    <button class="cyber-btn" id="init-enroll-btn" style="border-color: #00f0ff; color: #00f0ff;">INITIALIZE CAMERA</button>
+                    <button class="cyber-btn hidden" id="capture-enroll-btn" style="background: rgba(0, 240, 255, 0.2); border-color: #00f0ff; color: #00f0ff;">CAPTURE FACE DNA</button>
+                    <div id="enroll-log" class="system-message hidden" style="margin-top: 15px; text-align: center;"></div>
+                </div>
+                
+                <div id="super-admin-log" class="system-message hidden" style="margin-top: 20px; text-align: left;"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Decorative Corner UI Elements -->
+    <div class="hud-corner top-right">GUB :: SYS.ADMIN</div>
+    <div class="hud-corner bottom-left">LAT: 23.81 • LON: 90.41</div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

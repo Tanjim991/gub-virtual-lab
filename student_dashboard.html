@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUB | Student Node</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- CodeMirror Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="brand-mini">
+                <img src="logo.png" alt="GUB Logo">
+                <p>STUDENT_NODE</p>
+                <div class="user-id" id="student-display-id" style="color:var(--gub-yellow);">ENCRYPTED_ID</div>
+            </div>
+            
+            <ul class="nav-links">
+                <li><button class="nav-btn active" data-target="overview-panel">:: MY_PROFILE</button></li>
+                <li><button class="nav-btn" data-target="missions-panel" style="color:var(--gub-yellow);">:: ACTIVE_MISSIONS</button></li>
+                <li><button class="nav-btn" data-target="leaderboard-panel">:: LEADERBOARD</button></li>
+                <li><button class="nav-btn" data-target="directory-panel" style="color:var(--gub-accent);">:: NETWORK_DIRECTORY</button></li>
+                <li><button class="nav-btn logout-btn" id="logout-btn"><< DISCONNECT</button></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content-area">
+            
+            <!-- Panel 1: Profile Overview -->
+            <section id="overview-panel" class="panel active">
+                <header class="panel-header">
+                    <h2>HACKER_PROFILE</h2>
+                </header>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>CURRENT_RANK</h3>
+                        <div class="number" id="profile-rank" style="font-size: 2rem; color: var(--gub-yellow);">ROOKIE</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>TOTAL_EXP</h3>
+                        <div class="number" id="profile-exp">0</div>
+                    </div>
+                    <div class="stat-card highlight" style="border-color:var(--gub-accent);">
+                        <h3>MISSIONS_CLEARED</h3>
+                        <div class="number" id="profile-missions">0</div>
+                    </div>
+                </div>
+
+                <div class="quick-notice" style="margin-top:20px; border-color:var(--gub-accent);">
+                    <h3 style="color:var(--gub-accent);">[ LATEST ANNOUNCEMENTS ]</h3>
+                    <div id="announcements-container">
+                        <p style="color:var(--text-dim); line-height:1.6; margin-top:10px;">
+                            Fetching system updates...
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 2: Missions -->
+            <section id="missions-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color: var(--gub-yellow);">
+                    <h2 style="color:var(--gub-yellow);">MISSION_BOARD</h2>
+                    <p>Select an active task and submit your protocol.</p>
+                </header>
+                <div class="stats-grid" id="missions-container">
+                    <!-- Tasks injected here by JS -->
+                </div>
+                
+                <div class="approval-card" style="flex-direction: column; align-items: stretch; margin-top:30px; border-color: #00f0ff; background:rgba(0,0,0,0.5);">
+                     <h3 style="color: #00f0ff; margin-bottom: 10px; font-family:'Share Tech Mono';">[ HACKER'S IDE: SUBMIT PROTOCOL ]</h3>
+                     <input type="text" id="submit-mission-id" class="cyber-input" placeholder="Mission ID (e.g., 2)" style="margin-bottom: 15px;">
+                     <!-- CodeMirror Container -->
+                     <textarea id="code-editor-textarea"></textarea>
+                     <button class="cyber-btn mt-1" id="submit-code-btn" style="border-color: #00f0ff; color: #00f0ff; margin-top: 15px;">TRANSMIT TO ADMIN NODE</button>
+                     <div id="submit-log" class="system-message hidden" style="margin-top: 15px; text-align: left;"></div>
+                </div>
+
+                <!-- USER EXPERIENCE PILLAR: Submission History -->
+                <div style="margin-top: 30px;">
+                    <h3 style="color: var(--gub-accent); font-family: 'Share Tech Mono', monospace; margin-bottom: 15px;">[ TRANSMISSION LOG ]</h3>
+                    <div class="table-container">
+                        <table class="cyber-table" id="my-submissions-table">
+                            <tr>
+                                <th>MISSION_ID</th>
+                                <th>MISSION_TITLE</th>
+                                <th>STATUS</th>
+                            </tr>
+                            <tbody id="my-submissions-body">
+                                <!-- User submissions injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 3: Leaderboard -->
+            <section id="leaderboard-panel" class="panel">
+                <header class="panel-header">
+                    <h2>GLOBAL_RANKINGS</h2>
+                    <p>Top 10 Nodes worldwide.</p>
+                </header>
+                <div class="table-container">
+                    <table class="cyber-table" id="leaderboard-table">
+                        <tr>
+                            <th>RANK</th>
+                            <th>USER_NODE</th>
+                            <th>EXP_POINTS</th>
+                            <th>STATUS</th>
+                        </tr>
+                        <!-- Ranks injected here by JS -->
+                    </table>
+                </div>
+            </section>
+
+            <!-- Panel 4: Network Directory -->
+            <section id="directory-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color: var(--gub-accent);">
+                    <h2 style="color:var(--gub-accent);">NETWORK_DIRECTORY</h2>
+                    <p>Live active nodes on the GUB Cyber-Lab platform.</p>
+                </header>
+                <div style="margin-top: 20px; font-family: 'Share Tech Mono'; font-size: 1.2rem; color: var(--gub-accent);">
+                    <span id="directory-count">0</span> HACKERS ONLINE
+                </div>
+                <div class="stats-grid" id="directory-container" style="margin-top: 20px;">
+                    <!-- Directory injected here by JS -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Decorative Corner UI Elements -->
+    <div class="hud-corner top-right">GUB :: SYS.STUDENT</div>
+    <div class="hud-corner bottom-left">LAT: 23.81 • LON: 90.41</div>
+
+    <script src="student_dashboard.js"></script>
+</body>
+</html>
