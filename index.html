@@ -62,6 +62,12 @@
                             <div class="scanner-laser"></div>
                             <div class="scanner-overlay" id="scanner-overlay">AWAITING VIDEO STREAM...</div>
                         </div>
+                        <!-- Emergency Passkey Fallback for Admin -->
+                        <div id="passkey-fallback" class="hidden" style="margin-top:15px; text-align:center;">
+                            <p style="color:var(--text-dim); font-family:'Share Tech Mono',monospace; font-size:0.8rem; margin-bottom:10px;">[ DNA NOT ENROLLED — USE EMERGENCY ACCESS ]</p>
+                            <input type="password" id="admin-emergency-passkey" class="cyber-input" placeholder="Enter Admin Passkey" style="margin-bottom:10px; border-color:var(--gub-red);">
+                            <button type="button" id="admin-passkey-btn" class="cyber-btn" style="border-color:var(--gub-red); color:var(--gub-red); width:100%;">EMERGENCY ACCESS</button>
+                        </div>
                     </div>
 
                     <div class="form-group hidden" id="email-group">

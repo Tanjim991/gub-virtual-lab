@@ -159,8 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const dnaData = await dnaRes.json();
             
             if(!dnaRes.ok || !dnaData.face_descriptor) {
-                overlay.textContent = "FATAL ERROR: DNA NOT ENROLLED YET.";
+                overlay.textContent = "DNA NOT ENROLLED YET.";
                 overlay.style.color = "var(--gub-red)";
+                // Show emergency passkey fallback
+                const fallback = document.getElementById('passkey-fallback');
+                if(fallback) fallback.classList.remove('hidden');
                 return;
             }
             
@@ -239,6 +242,41 @@ document.addEventListener('DOMContentLoaded', () => {
             streamRef.getTracks().forEach(track => track.stop());
             streamRef = null;
         }
+    }
+
+    // Emergency Admin Passkey Login (when Face DNA not enrolled)
+    const adminPasskeyBtn = document.getElementById('admin-passkey-btn');
+    if(adminPasskeyBtn) {
+        adminPasskeyBtn.addEventListener('click', async () => {
+            const regVal = regNumberInput.value.trim();
+            const passkey = document.getElementById('admin-emergency-passkey').value;
+            if(!passkey) { showMessage(errorMessage, 'ERROR: Enter your admin passkey.'); return; }
+            
+            adminPasskeyBtn.textContent = 'AUTHENTICATING...';
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registration_id: regVal, passkey })
+                });
+                const data = await res.json();
+                if(data.success && data.user.role === 'ADMIN') {
+                    sessionStorage.setItem('gub_admin_auth', 'true');
+                    sessionStorage.setItem('gub_student_id', regVal);
+                    sessionStorage.setItem('gub_user_role', 'ADMIN');
+                    adminPasskeyBtn.textContent = 'ACCESS GRANTED — REDIRECTING...';
+                    adminPasskeyBtn.style.borderColor = 'var(--gub-accent)';
+                    adminPasskeyBtn.style.color = 'var(--gub-accent)';
+                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                } else {
+                    showMessage(errorMessage, data.error || 'ACCESS DENIED.');
+                    adminPasskeyBtn.textContent = 'EMERGENCY ACCESS';
+                }
+            } catch(e) {
+                showMessage(errorMessage, 'CONNECTION FAILED.');
+                adminPasskeyBtn.textContent = 'EMERGENCY ACCESS';
+            }
+        });
     }
 
     tabLogin.addEventListener('click', () => {
