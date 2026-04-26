@@ -50,16 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/dashboard-stats')
             .then(res => res.json())
             .then(data => {
-                if(data) {
-                    const statCards = document.querySelectorAll('.stat-card .number');
-                    if(statCards.length >= 3) {
-                        statCards[0].textContent = data.activeHackers; // Overwrites the hardcoded 142
-                        statCards[1].textContent = data.pendingTasks;  // Overwrites the hardcoded 18
-                        statCards[2].textContent = data.networkStatus;
-                    }
+                if (data) {
+                    if (document.getElementById('stat-active')) document.getElementById('stat-active').textContent = data.activeHackers;
+                    if (document.getElementById('stat-pending')) document.getElementById('stat-pending').textContent = data.pendingTasks;
                 }
             })
-            .catch(err => console.log('[SYS] Database disconnected. Running offline demo mode.'));
+            .catch(err => console.log('[SYS] Database disconnected.'));
     }
 
     // Dynamic Data Loading Functions
@@ -532,4 +528,97 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ============================================================
+    // ANALYTICS
+    // ============================================================
+    function loadAnalytics() {
+        fetch('/api/analytics').then(r => r.json()).then(data => {
+            document.getElementById('an-total').textContent = data.totalStudents;
+            document.getElementById('an-active').textContent = data.activeStudents;
+            document.getElementById('an-pending').textContent = data.pendingStudents;
+            document.getElementById('an-online').textContent = data.onlineNow;
+            document.getElementById('an-tasks').textContent = data.totalTasks;
+            document.getElementById('an-submissions').textContent = data.totalSubmissions;
+            document.getElementById('an-passed').textContent = data.passedSubmissions;
+            document.getElementById('an-rate').textContent = data.passRate + '%';
+        });
+    }
+
+    // ============================================================
+    // ADMIN CHAT
+    // ============================================================
+    let adminLastMsgId = 0;
+    let adminChatLoaded = false;
+
+    function loadAdminChat() {
+        fetch('/api/messages').then(r => r.json()).then(data => {
+            const container = document.getElementById('admin-chat-messages');
+            if (!data.messages || data.messages.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-dim); font-family:\'Share Tech Mono\'; font-size:0.8rem; text-align:center;">-- NO MESSAGES YET --</p>';
+                return;
+            }
+            container.innerHTML = '';
+            data.messages.forEach(msg => renderAdminMsg(msg, false));
+            container.scrollTop = container.scrollHeight;
+            adminLastMsgId = Math.max(...data.messages.map(m => m.id));
+            adminChatLoaded = true;
+        });
+    }
+
+    function renderAdminMsg(msg, scroll = true) {
+        const container = document.getElementById('admin-chat-messages');
+        const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isAdmin = msg.sender_id === adminId;
+        const div = document.createElement('div');
+        div.style.cssText = `padding:10px 14px; border-radius:8px; font-family:'Share Tech Mono',monospace; font-size:0.82rem; max-width:80%; ${isAdmin ? 'align-self:flex-end; background:rgba(255,0,50,0.1); border:1px solid rgba(255,0,50,0.3); color:#fff;' : 'align-self:flex-start; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#ccc;'} cursor:pointer; word-break:break-word;`;
+        div.setAttribute('title', 'Click to delete');
+        div.innerHTML = `<div style="font-size:0.7rem; color:${isAdmin?'var(--gub-red)':'var(--gub-accent)'}; margin-bottom:4px;">${isAdmin ? '[ADMIN]' : msg.sender_name} • ${time}</div>${msg.content.replace(/</g,'&lt;')}`;
+        div.addEventListener('click', () => {
+            if (confirm('Delete this message?')) {
+                fetch('/api/messages/' + msg.id, { method: 'DELETE' }).then(() => { div.remove(); });
+            }
+        });
+        container.appendChild(div);
+        if (scroll) container.scrollTop = container.scrollHeight;
+    }
+
+    setInterval(() => {
+        const chatPanel = document.getElementById('chat-panel');
+        if (!chatPanel || !chatPanel.classList.contains('active')) return;
+        if (!adminChatLoaded) { loadAdminChat(); return; }
+        fetch('/api/messages').then(r => r.json()).then(data => {
+            if (!data.messages) return;
+            const newMsgs = data.messages.filter(m => m.id > adminLastMsgId);
+            newMsgs.forEach(msg => { renderAdminMsg(msg); adminLastMsgId = Math.max(adminLastMsgId, msg.id); });
+        });
+    }, 3000);
+
+    const adminChatSend = document.getElementById('admin-chat-send');
+    const adminChatInput = document.getElementById('admin-chat-input');
+    if (adminChatSend) {
+        function sendAdminMsg() {
+            const content = adminChatInput.value.trim();
+            if (!content) return;
+            adminChatInput.value = '';
+            fetch('/api/send-message', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender_id: adminId, sender_name: 'ADMIN', content })
+            }).then(() => loadAdminChat());
+        }
+        adminChatSend.addEventListener('click', sendAdminMsg);
+        adminChatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendAdminMsg(); });
+    }
+
+    // ============================================================
+    // PANEL NAV — hook Analytics & Chat load
+    // ============================================================
+    document.querySelectorAll('.nav-btn:not(.logout-btn)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-target');
+            if (target === 'analytics-panel') loadAnalytics();
+            if (target === 'chat-panel') loadAdminChat();
+        });
+    });
+
 });

@@ -6,12 +6,65 @@
     <title>GUB | Student Node</title>
     <link rel="stylesheet" href="dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- CodeMirror Assets -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <style>
+        /* ---- BADGE STYLES ---- */
+        .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .badge {
+            padding: 6px 14px; border-radius: 20px; font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem; font-weight: bold; border: 1px solid;
+            animation: badgePulse 2s infinite alternate;
+        }
+        .badge-rookie    { border-color:#888; color:#888; }
+        .badge-hacker    { border-color:#00f0ff; color:#00f0ff; }
+        .badge-elite     { border-color:#a855f7; color:#a855f7; }
+        .badge-warrior   { border-color:#ffcc00; color:#ffcc00; }
+        .badge-shadow    { border-color:#ff2e4d; color:#ff2e4d; }
+        .badge-legend    { border-color:#00ff88; color:#00ff88; background:rgba(0,255,136,0.1); }
+        .badge-initiate  { border-color:#00f0ff; color:#00f0ff; }
+        .badge-operative { border-color:#a855f7; color:#a855f7; }
+        .badge-specialist{ border-color:#ffcc00; color:#ffcc00; }
+        .badge-master    { border-color:#ff2e4d; color:#ff2e4d; }
+        @keyframes badgePulse { from{opacity:0.7;} to{opacity:1;} }
+
+        /* ---- CHAT STYLES ---- */
+        .chat-container { display:flex; flex-direction:column; height:450px; }
+        .chat-messages {
+            flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px;
+            background:rgba(0,0,0,0.4); border:1px solid rgba(0,240,255,0.2); border-radius:6px; margin-bottom:15px;
+        }
+        .chat-bubble {
+            max-width:80%; padding:10px 14px; border-radius:12px; font-family:'Share Tech Mono', monospace; font-size:0.82rem;
+            line-height:1.5; word-break:break-word;
+        }
+        .chat-bubble.mine {
+            align-self:flex-end; background:rgba(0,240,255,0.12); border:1px solid rgba(0,240,255,0.4); color:#fff;
+        }
+        .chat-bubble.theirs {
+            align-self:flex-start; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#ccc;
+        }
+        .chat-bubble .sender { font-size:0.7rem; color:var(--gub-accent); margin-bottom:4px; }
+        .chat-bubble.mine .sender { color:var(--gub-yellow); }
+        .chat-bubble .time { font-size:0.65rem; color:#555; margin-top:4px; }
+        .chat-input-row { display:flex; gap:10px; }
+        .chat-input-row input { flex:1; }
+
+        /* ---- DEADLINE BADGE ---- */
+        .deadline-badge {
+            display:inline-block; padding:3px 10px; border-radius:4px; font-size:0.72rem;
+            font-family:'Share Tech Mono'; margin-top:8px;
+        }
+        .deadline-ok   { border:1px solid #00ff88; color:#00ff88; }
+        .deadline-soon { border:1px solid #ffcc00; color:#ffcc00; }
+        .deadline-over { border:1px solid #ff2e4d; color:#ff2e4d; }
+
+        /* ---- PASSWORD CHANGE ---- */
+        .password-form { display:flex; flex-direction:column; gap:12px; }
+    </style>
 </head>
 <body>
     <div class="scanlines"></div>
@@ -29,8 +82,10 @@
             <ul class="nav-links">
                 <li><button class="nav-btn active" data-target="overview-panel">:: MY_PROFILE</button></li>
                 <li><button class="nav-btn" data-target="missions-panel" style="color:var(--gub-yellow);">:: ACTIVE_MISSIONS</button></li>
+                <li><button class="nav-btn" data-target="chat-panel" style="color:var(--gub-accent);">:: TEAM_CHAT</button></li>
                 <li><button class="nav-btn" data-target="leaderboard-panel">:: LEADERBOARD</button></li>
                 <li><button class="nav-btn" data-target="directory-panel" style="color:var(--gub-accent);">:: NETWORK_DIRECTORY</button></li>
+                <li><button class="nav-btn" data-target="settings-panel" style="color:#a855f7;">:: SETTINGS</button></li>
                 <li><button class="nav-btn logout-btn" id="logout-btn"><< DISCONNECT</button></li>
             </ul>
         </nav>
@@ -58,12 +113,18 @@
                     </div>
                 </div>
 
+                <!-- Achievement Badges -->
+                <div class="quick-notice" style="margin-top:20px; border-color:#a855f7;">
+                    <h3 style="color:#a855f7;">[ ACHIEVEMENT BADGES ]</h3>
+                    <div class="badge-row" id="badge-container">
+                        <span style="color:var(--text-dim); font-size:0.85rem;">Complete missions to earn badges...</span>
+                    </div>
+                </div>
+
                 <div class="quick-notice" style="margin-top:20px; border-color:var(--gub-accent);">
                     <h3 style="color:var(--gub-accent);">[ LATEST ANNOUNCEMENTS ]</h3>
                     <div id="announcements-container">
-                        <p style="color:var(--text-dim); line-height:1.6; margin-top:10px;">
-                            Fetching system updates...
-                        </p>
+                        <p style="color:var(--text-dim); line-height:1.6; margin-top:10px;">Fetching system updates...</p>
                     </div>
                 </div>
             </section>
@@ -74,38 +135,47 @@
                     <h2 style="color:var(--gub-yellow);">MISSION_BOARD</h2>
                     <p>Select an active task and submit your protocol.</p>
                 </header>
-                <div class="stats-grid" id="missions-container">
-                    <!-- Tasks injected here by JS -->
-                </div>
+                <div class="stats-grid" id="missions-container"></div>
                 
-                <div class="approval-card" style="flex-direction: column; align-items: stretch; margin-top:30px; border-color: #00f0ff; background:rgba(0,0,0,0.5);">
-                     <h3 style="color: #00f0ff; margin-bottom: 10px; font-family:'Share Tech Mono';">[ HACKER'S IDE: SUBMIT PROTOCOL ]</h3>
-                     <input type="text" id="submit-mission-id" class="cyber-input" placeholder="Mission ID (e.g., 2)" style="margin-bottom: 15px;">
-                     <!-- CodeMirror Container -->
-                     <textarea id="code-editor-textarea"></textarea>
-                     <button class="cyber-btn mt-1" id="submit-code-btn" style="border-color: #00f0ff; color: #00f0ff; margin-top: 15px;">TRANSMIT TO ADMIN NODE</button>
-                     <div id="submit-log" class="system-message hidden" style="margin-top: 15px; text-align: left;"></div>
+                <div class="approval-card" style="flex-direction:column; align-items:stretch; margin-top:30px; border-color:#00f0ff; background:rgba(0,0,0,0.5);">
+                    <h3 style="color:#00f0ff; margin-bottom:10px; font-family:'Share Tech Mono';">[ HACKER'S IDE: SUBMIT PROTOCOL ]</h3>
+                    <input type="text" id="submit-mission-id" class="cyber-input" placeholder="Mission ID (e.g., 2)" style="margin-bottom:15px;">
+                    <textarea id="code-editor-textarea"></textarea>
+                    <button class="cyber-btn mt-1" id="submit-code-btn" style="border-color:#00f0ff; color:#00f0ff; margin-top:15px;">TRANSMIT TO ADMIN NODE</button>
+                    <div id="submit-log" class="system-message hidden" style="margin-top:15px; text-align:left;"></div>
                 </div>
 
-                <!-- USER EXPERIENCE PILLAR: Submission History -->
-                <div style="margin-top: 30px;">
-                    <h3 style="color: var(--gub-accent); font-family: 'Share Tech Mono', monospace; margin-bottom: 15px;">[ TRANSMISSION LOG ]</h3>
+                <div style="margin-top:30px;">
+                    <h3 style="color:var(--gub-accent); font-family:'Share Tech Mono', monospace; margin-bottom:15px;">[ TRANSMISSION LOG ]</h3>
                     <div class="table-container">
                         <table class="cyber-table" id="my-submissions-table">
-                            <tr>
-                                <th>MISSION_ID</th>
-                                <th>MISSION_TITLE</th>
-                                <th>STATUS</th>
-                            </tr>
-                            <tbody id="my-submissions-body">
-                                <!-- User submissions injected here -->
-                            </tbody>
+                            <tr><th>MISSION_ID</th><th>MISSION_TITLE</th><th>STATUS</th></tr>
+                            <tbody id="my-submissions-body"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- Panel 3: Leaderboard -->
+            <!-- Panel 3: Team Chat -->
+            <section id="chat-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color:var(--gub-accent);">
+                    <h2 style="color:var(--gub-accent);">TEAM_CHAT</h2>
+                    <p>Real-time communication channel. All nodes can read messages.</p>
+                </header>
+                <div class="chat-container" style="margin-top:20px;">
+                    <div class="chat-messages" id="chat-messages">
+                        <p style="color:var(--text-dim); font-family:'Share Tech Mono'; font-size:0.8rem; text-align:center;">
+                            -- SECURE CHANNEL OPEN --
+                        </p>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" class="cyber-input" placeholder="Type message... (Enter to send)" maxlength="500">
+                        <button class="cyber-btn" id="chat-send-btn" style="white-space:nowrap; padding:10px 20px;">TRANSMIT</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 4: Leaderboard -->
             <section id="leaderboard-panel" class="panel">
                 <header class="panel-header">
                     <h2>GLOBAL_RANKINGS</h2>
@@ -113,35 +183,44 @@
                 </header>
                 <div class="table-container">
                     <table class="cyber-table" id="leaderboard-table">
-                        <tr>
-                            <th>RANK</th>
-                            <th>USER_NODE</th>
-                            <th>EXP_POINTS</th>
-                            <th>STATUS</th>
-                        </tr>
-                        <!-- Ranks injected here by JS -->
+                        <tr><th>RANK</th><th>USER_NODE</th><th>EXP_POINTS</th><th>STATUS</th></tr>
                     </table>
                 </div>
             </section>
 
-            <!-- Panel 4: Network Directory -->
+            <!-- Panel 5: Network Directory -->
             <section id="directory-panel" class="panel">
-                <header class="panel-header" style="border-bottom-color: var(--gub-accent);">
+                <header class="panel-header" style="border-bottom-color:var(--gub-accent);">
                     <h2 style="color:var(--gub-accent);">NETWORK_DIRECTORY</h2>
                     <p>Live active nodes on the GUB Cyber-Lab platform.</p>
                 </header>
-                <div style="margin-top: 20px; font-family: 'Share Tech Mono'; font-size: 1.2rem; color: var(--gub-accent);">
+                <div style="margin-top:20px; font-family:'Share Tech Mono'; font-size:1.2rem; color:var(--gub-accent);">
                     <span id="directory-count">0</span> HACKERS ONLINE
                 </div>
-                <div class="stats-grid" id="directory-container" style="margin-top: 20px;">
-                    <!-- Directory injected here by JS -->
+                <div class="stats-grid" id="directory-container" style="margin-top:20px;"></div>
+            </section>
+
+            <!-- Panel 6: Settings -->
+            <section id="settings-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color:#a855f7;">
+                    <h2 style="color:#a855f7;">SETTINGS</h2>
+                    <p>Manage your account security.</p>
+                </header>
+                <div class="approval-card" style="flex-direction:column; align-items:stretch; margin-top:25px; border-color:#a855f7; background:rgba(0,0,0,0.5); max-width:500px;">
+                    <h3 style="color:#a855f7; font-family:'Share Tech Mono'; margin-bottom:20px;">[ CHANGE PASSKEY ]</h3>
+                    <div class="password-form">
+                        <input type="password" id="old-passkey" class="cyber-input" placeholder="Current Passkey">
+                        <input type="password" id="new-passkey" class="cyber-input" placeholder="New Passkey (min 6 chars)">
+                        <input type="password" id="confirm-passkey" class="cyber-input" placeholder="Confirm New Passkey">
+                        <button class="cyber-btn" id="change-passkey-btn" style="border-color:#a855f7; color:#a855f7;">UPDATE PASSKEY</button>
+                        <div id="passkey-result" class="hidden system-message"></div>
+                    </div>
                 </div>
             </section>
 
         </main>
     </div>
 
-    <!-- Decorative Corner UI Elements -->
     <div class="hud-corner top-right">GUB :: SYS.STUDENT</div>
     <div class="hud-corner bottom-left">LAT: 23.81 • LON: 90.41</div>
 

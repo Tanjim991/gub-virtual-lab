@@ -552,6 +552,134 @@ app.get('/api/announcements', async (req, res) => {
     res.json({ announcements: data || [] });
 });
 
+// ============================================================
+// 25. ADMIN ANALYTICS
+// ============================================================
+app.get('/api/analytics', async (req, res) => {
+    const { count: totalStudents } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'STUDENT');
+    const { count: activeStudents } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'STUDENT').eq('status', 'ACTIVE');
+    const { count: pendingStudents } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
+    const { count: totalTasks } = await supabase.from('tasks').select('*', { count: 'exact', head: true });
+    const { count: totalSubmissions } = await supabase.from('submissions').select('*', { count: 'exact', head: true });
+    const { count: passedSubmissions } = await supabase.from('submissions').select('*', { count: 'exact', head: true }).eq('status', 'PASSED');
+    const { count: onlineNow } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('connection_status', 'ONLINE');
+
+    res.json({
+        totalStudents: totalStudents || 0,
+        activeStudents: activeStudents || 0,
+        pendingStudents: pendingStudents || 0,
+        totalTasks: totalTasks || 0,
+        totalSubmissions: totalSubmissions || 0,
+        passedSubmissions: passedSubmissions || 0,
+        passRate: totalSubmissions > 0 ? Math.round((passedSubmissions / totalSubmissions) * 100) : 0,
+        onlineNow: onlineNow || 0
+    });
+});
+
+// ============================================================
+// 26. CHANGE PASSWORD
+// ============================================================
+app.post('/api/change-password', async (req, res) => {
+    const { registration_id, old_passkey, new_passkey } = req.body;
+    if (!registration_id || !old_passkey || !new_passkey) return res.status(400).json({ error: "Missing fields." });
+    if (new_passkey.length < 6) return res.status(400).json({ error: "New passkey must be at least 6 characters." });
+
+    const { data: user, error } = await supabase.from('users').select('passkey').eq('registration_id', registration_id).single();
+    if (error || !user) return res.status(404).json({ error: "User not found." });
+
+    if (!bcrypt.compareSync(old_passkey, user.passkey)) return res.status(401).json({ error: "Old passkey is incorrect." });
+
+    const newHash = bcrypt.hashSync(new_passkey, 10);
+    await supabase.from('users').update({ passkey: newHash }).eq('registration_id', registration_id);
+    res.json({ success: true, message: "PASSKEY UPDATED SUCCESSFULLY." });
+});
+
+// ============================================================
+// 27. SEND CHAT MESSAGE
+// ============================================================
+app.post('/api/send-message', async (req, res) => {
+    const { sender_id, sender_name, content } = req.body;
+    if (!sender_id || !content || content.trim().length === 0) return res.status(400).json({ error: "Empty message." });
+    if (content.length > 500) return res.status(400).json({ error: "Message too long (max 500 chars)." });
+
+    const { error } = await supabase.from('messages').insert({ sender_id, sender_name, content: content.trim() });
+    if (error) return res.status(500).json({ error: "Failed to send message." });
+    res.json({ success: true });
+});
+
+// ============================================================
+// 28. GET CHAT MESSAGES (last 50)
+// ============================================================
+app.get('/api/messages', async (req, res) => {
+    const { data, error } = await supabase.from('messages')
+        .select('id, sender_id, sender_name, content, timestamp')
+        .order('timestamp', { ascending: false })
+        .limit(50);
+    if (error) return res.status(500).json({ error: "Failed to fetch messages." });
+    res.json({ messages: (data || []).reverse() });
+});
+
+// ============================================================
+// 29. DELETE CHAT MESSAGE (Admin only)
+// ============================================================
+app.delete('/api/messages/:id', async (req, res) => {
+    const { error } = await supabase.from('messages').delete().eq('id', req.params.id);
+    if (error) return res.status(500).json({ error: "Failed to delete message." });
+    res.json({ success: true });
+});
+
+// ============================================================
+// 30. CREATE TASK WITH DEADLINE (override endpoint 11)
+// ============================================================
+app.post('/api/create-task-v2', async (req, res) => {
+    const { title, exp, deadline } = req.body;
+    if (!title || !exp) return res.status(400).json({ error: "Missing parameters" });
+    if (parseInt(exp) <= 0) return res.status(400).json({ error: "EXP must be greater than zero." });
+
+    const taskData = { title, reward_exp: parseInt(exp), status: 'ACTIVE' };
+    if (deadline) taskData.deadline = new Date(deadline).toISOString();
+
+    const { data: task, error } = await supabase.from('tasks').insert(taskData).select().single();
+    if (error) return res.status(500).json({ error: "Failed to broadcast task" });
+
+    // Email broadcast in background
+    const { data: students } = await supabase.from('users').select('email').eq('role', 'STUDENT').eq('status', 'ACTIVE');
+    const emails = (students || []).map(s => s.email).filter(e => e && e.includes('@'));
+
+    if (emails.length > 0 && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        const deadlineText = deadline ? `<p style="color:#ffcc00;">DEADLINE: ${new Date(deadline).toLocaleString()}</p>` : '';
+        const transporter = createTransporter();
+        const sendChunks = async () => {
+            for (let i = 0; i < emails.length; i += 50) {
+                const chunk = emails.slice(i, i + 50);
+                try {
+                    await transporter.sendMail({
+                        from: `"GUB Gatekeeper Protocol" <${process.env.EMAIL_USER}>`,
+                        to: process.env.EMAIL_USER, bcc: chunk.join(', '),
+                        subject: 'GUB Cyber-Lab // NEW MISSION DEPLOYED',
+                        html: `<div style="font-family:monospace;background:#000;color:#00f0ff;padding:20px;">
+                            <h2 style="color:#ffcc00;">[ NEW MISSION DIRECTIVE ]</h2>
+                            <p>Greetings Hacker,</p>
+                            <div style="background:rgba(0,240,255,0.1);border:1px dashed #00f0ff;padding:15px;margin:20px 0;">
+                                <h3 style="color:#fff;margin-top:0;">MISSION: ${title}</h3>
+                                <p style="color:#00f0ff;margin-bottom:0;">REWARD: <strong>${exp} EXP</strong></p>
+                                ${deadlineText}
+                            </div>
+                            <p>Log in to submit your code.</p>
+                        </div>`
+                    });
+                } catch (e) { console.error('[TASK EMAIL ERROR]', e.message); }
+                await new Promise(r => setTimeout(r, 1500));
+            }
+        };
+        sendChunks();
+    }
+
+    res.json({ success: true, task_id: task.id });
+});
+
+
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`[SYS] SERVER ONLINE ON PORT ${PORT}`);

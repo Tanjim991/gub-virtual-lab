@@ -29,6 +29,8 @@
                 <li><button class="nav-btn" data-target="tasks-panel" style="color: var(--gub-yellow);">:: TASKS_&_PROJECTS</button></li>
                 <li><button class="nav-btn" data-target="ai-panel">:: AI_AUTOMATION</button></li>
                 <li><button class="nav-btn" data-target="super-admin-panel" style="color: var(--gub-red);">[!] SUPER_ADMIN [!]</button></li>
+                <li><button class="nav-btn" data-target="analytics-panel" style="color:#00ff88;">:: ANALYTICS</button></li>
+                <li><button class="nav-btn" data-target="chat-panel" style="color:var(--gub-accent);">:: TEAM_CHAT</button></li>
                 <li><button class="nav-btn logout-btn" id="logout-btn"><< LOGOUT</button></li>
             </ul>
         </nav>
@@ -44,11 +46,11 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>ACTIVE_HACKERS</h3>
-                        <div class="number">142</div>
+                        <div class="number" id="stat-active">—</div>
                     </div>
                     <div class="stat-card">
-                        <h3>PENDING_TASKS</h3>
-                        <div class="number">18</div>
+                        <h3>PENDING_REQUESTS</h3>
+                        <div class="number" id="stat-pending">—</div>
                     </div>
                     <div class="stat-card highlight">
                         <h3>NETWORK_STATUS</h3>
@@ -220,6 +222,39 @@
                 <div id="super-admin-log" class="system-message hidden" style="margin-top: 20px; text-align: left;"></div>
             </section>
 
+            <!-- ANALYTICS PANEL -->
+            <section id="analytics-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color:#00ff88;">
+                    <h2 style="color:#00ff88;">ANALYTICS_CENTER</h2>
+                    <p>Real-time platform statistics.</p>
+                </header>
+                <div class="stats-grid" style="margin-top:20px;" id="analytics-grid">
+                    <div class="stat-card"><h3>TOTAL_STUDENTS</h3><div class="number" id="an-total">—</div></div>
+                    <div class="stat-card"><h3>ACTIVE_STUDENTS</h3><div class="number" id="an-active" style="color:#00ff88;">—</div></div>
+                    <div class="stat-card"><h3>PENDING_APPROVAL</h3><div class="number" id="an-pending" style="color:var(--gub-yellow);">—</div></div>
+                    <div class="stat-card"><h3>ONLINE_NOW</h3><div class="number" id="an-online" style="color:var(--gub-accent);">—</div></div>
+                    <div class="stat-card"><h3>TOTAL_MISSIONS</h3><div class="number" id="an-tasks">—</div></div>
+                    <div class="stat-card"><h3>TOTAL_SUBMISSIONS</h3><div class="number" id="an-submissions">—</div></div>
+                    <div class="stat-card"><h3>PASSED_SUBMISSIONS</h3><div class="number" id="an-passed" style="color:#00ff88;">—</div></div>
+                    <div class="stat-card highlight"><h3>PASS_RATE</h3><div class="number" id="an-rate">—%</div></div>
+                </div>
+            </section>
+
+            <!-- CHAT PANEL (Admin) -->
+            <section id="chat-panel" class="panel">
+                <header class="panel-header" style="border-bottom-color:var(--gub-accent);">
+                    <h2 style="color:var(--gub-accent);">TEAM_CHAT</h2>
+                    <p>Monitor and participate in student communications. Click any message to delete it.</p>
+                </header>
+                <div style="display:flex; flex-direction:column; height:450px; margin-top:20px;">
+                    <div id="admin-chat-messages" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(0,240,255,0.2); border-radius:6px; margin-bottom:15px;"></div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="admin-chat-input" class="cyber-input" placeholder="Send message as Admin..." maxlength="500" style="flex:1;">
+                        <button class="cyber-btn" id="admin-chat-send" style="white-space:nowrap; padding:10px 20px;">BROADCAST</button>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -230,3 +265,4 @@
     <script src="dashboard.js"></script>
 </body>
 </html>
+
