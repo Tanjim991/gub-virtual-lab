@@ -412,19 +412,43 @@ app.post('/api/grade-submission', async (req, res) => {
 // 15. PROMOTE USER (Super Admin)
 // ============================================================
 app.post('/api/promote-user', async (req, res) => {
-    const { registration_id } = req.body;
-    const { error, count } = await supabase.from('users')
-        .update({ role: 'ADMIN' })
+    const { registration_id, requester_id } = req.body;
+
+    // SECURITY: ADMIN or TEACHER can promote students
+    const adminId = process.env.ADMIN_ID || '251-013-001';
+    const { data: requester } = await supabase.from('users')
+        .select('role').eq('registration_id', requester_id).single();
+    if (!requester || (requester.role !== 'ADMIN' && requester.role !== 'TEACHER')) {
+        return res.status(403).json({ error: "ACCESS DENIED: Only Admin or Teacher can appoint Teachers." });
+    }
+    if (registration_id === adminId) {
+        return res.status(400).json({ error: "Cannot change the Main Admin's role." });
+    }
+
+    const { error } = await supabase.from('users')
+        .update({ role: 'TEACHER' })
         .eq('registration_id', registration_id);
     if (error) return res.status(500).json({ error: "Database error during promotion" });
-    res.json({ success: true, message: "Node promoted to HIGH CLEARANCE (TEACHER)." });
+    res.json({ success: true, message: "Node promoted to TEACHER status. Manager access granted." });
 });
 
 // ============================================================
-// 16. BAN USER (Super Admin)
+// 16. BAN USER (ADMIN ONLY — CEO Power)
 // ============================================================
 app.post('/api/ban-user', async (req, res) => {
-    const { registration_id } = req.body;
+    const { registration_id, requester_id } = req.body;
+
+    // SECURITY: Only the main ADMIN (CEO) can ban/delete users
+    const adminId = process.env.ADMIN_ID || '251-013-001';
+    const { data: requester } = await supabase.from('users')
+        .select('role').eq('registration_id', requester_id).single();
+    if (!requester || requester.role !== 'ADMIN') {
+        return res.status(403).json({ error: "ACCESS DENIED: Only the Main Admin (CEO) can remove users." });
+    }
+    if (registration_id === adminId) {
+        return res.status(400).json({ error: "The Main Admin account cannot be deleted." });
+    }
+
     const { error } = await supabase.from('users').delete().eq('registration_id', registration_id);
     if (error) return res.status(500).json({ error: "Database error during ban" });
     // Clean up submissions
@@ -769,7 +793,7 @@ app.listen(PORT, () => {
     // Render sleeps after 15 min of inactivity — we prevent that!
     // ============================================================
     const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-    
+
     setInterval(async () => {
         try {
             await fetch(`${SELF_URL}/api/dashboard-stats`);

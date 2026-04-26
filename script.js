@@ -2,15 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---- Neural Network Canvas Animation ----
     const canvas = document.getElementById('network-canvas');
     const ctx = canvas.getContext('2d');
-    
+
     let width, height, particles;
-    
+
     function initCanvas() {
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
         particles = [];
         const particleCount = window.innerWidth < 768 ? 40 : 100;
-        
+
         for (let i = 0; i < particleCount; i++) {
             particles.push({
                 x: Math.random() * width,
@@ -21,38 +21,38 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-    
+
     let mouse = { x: null, y: null };
     window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    
+
     let animationId;
     function animate() {
         ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = 'rgba(0, 240, 255, 0.5)';
-        
+
         particles.forEach((p, index) => {
             p.x += p.vx; p.y += p.vy;
             if (p.x < 0 || p.x > width) p.vx *= -1;
             if (p.y < 0 || p.y > height) p.vy *= -1;
-            
+
             if (mouse.x != null) {
                 let dx = mouse.x - p.x;
                 let dy = mouse.y - p.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < 150) {
                     ctx.beginPath();
-                    ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distance/150})`;
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distance / 150})`;
                     ctx.lineWidth = 1;
                     ctx.moveTo(p.x, p.y);
                     ctx.lineTo(mouse.x, mouse.y);
                     ctx.stroke();
                 }
             }
-            
+
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             ctx.fill();
-            
+
             for (let j = index + 1; j < particles.length; j++) {
                 let p2 = particles[j];
                 let dx = p.x - p2.x;
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < 120) {
                     ctx.beginPath();
-                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 - distance/800})`; 
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${0.15 - distance / 800})`;
                     ctx.lineWidth = 0.5;
                     ctx.moveTo(p.x, p.y);
                     ctx.lineTo(p2.x, p2.y);
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         animationId = requestAnimationFrame(animate);
     }
     initCanvas(); animate(); window.addEventListener('resize', initCanvas); window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-    
+
     // UI PERFORMANCE PILLAR: Pause background physics when tab is inactive
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) cancelAnimationFrame(animationId);
@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dynamic Role Check
     regNumberInput.addEventListener('input', (e) => {
-        let val = e.target.value.replace(/\D/g, ''); 
-        if (val.length > 9) val = val.substring(0, 9); 
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 9) val = val.substring(0, 9);
         let formatted = '';
         if (val.length > 0) formatted += val.substring(0, 3);
         if (val.length > 3) formatted += '-' + val.substring(3, 6);
@@ -140,33 +140,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function startBiometricScan() {
-        if(streamRef) return; // already running
-        
+        if (streamRef) return; // already running
+
         const videoObj = document.getElementById('webcam-video');
         const overlay = document.getElementById('scanner-overlay');
         overlay.textContent = "LOADING NEURAL NETWORKS (5MB)...";
         overlay.style.color = "var(--text-main)";
 
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-        
+
         try {
             await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
             await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
             await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-            
+
             overlay.textContent = "FETCHING SECURE DNA FROM SERVER...";
             const dnaRes = await fetch('/api/get-admin-face');
             const dnaData = await dnaRes.json();
-            
-            if(!dnaRes.ok || !dnaData.face_descriptor) {
+
+            if (!dnaRes.ok || !dnaData.face_descriptor) {
                 overlay.textContent = "DNA NOT ENROLLED YET.";
                 overlay.style.color = "var(--gub-red)";
                 // Show emergency passkey fallback
                 const fallback = document.getElementById('passkey-fallback');
-                if(fallback) fallback.classList.remove('hidden');
+                if (fallback) fallback.classList.remove('hidden');
                 return;
             }
-            
+
             const adminDescriptor = new Float32Array(dnaData.face_descriptor);
 
             overlay.textContent = "INITIALIZING WEBCAM...";
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     resolve();
                 };
             });
-            
+
             overlay.textContent = "SCANNING VITAL SIGNS & FACE...";
 
             // BUG FIX: Prevent "bucket overflow" by using recursive scanning instead of setInterval.
@@ -189,12 +189,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let isScanning = true;
             async function scanLoop() {
                 if (!streamRef || !isScanning) return;
-                
+
                 try {
                     const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
                     const detection = await faceapi.detectSingleFace(videoObj, options).withFaceLandmarks().withFaceDescriptor();
-                    
-                    if(detection) {
+
+                    if (detection) {
                         const distance = faceapi.euclideanDistance(detection.descriptor, adminDescriptor);
                         if (distance < 0.55) { // Strict identity threshold
                             isScanning = false;
@@ -203,14 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             sessionStorage.setItem('gub_admin_auth', 'true');
                             sessionStorage.setItem('gub_student_id', '251-013-001');
                             sessionStorage.setItem('gub_user_role', 'ADMIN');
-                            
+
                             // Set Admin Online in DB
                             fetch('/api/set-connection', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ registration_id: '251-013-001', status: 'ONLINE' })
                             });
-                            
+
                             setTimeout(() => window.location.href = "dashboard.html", 1500);
                             return; // Stop loop
                         } else {
@@ -224,11 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (e) {
                     console.log("Scan frame dropped.");
                 }
-                
+
                 // Wait 500ms BEFORE starting the next scan, giving the phone CPU time to breathe
-                if(isScanning) setTimeout(scanLoop, 500);
+                if (isScanning) setTimeout(scanLoop, 500);
             }
-            
+
             scanLoop(); // Start the loop
 
         } catch (error) {
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopBiometricScan() {
-        if(streamRef) {
+        if (streamRef) {
             streamRef.getTracks().forEach(track => track.stop());
             streamRef = null;
         }
@@ -246,12 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Emergency Admin Passkey Login (when Face DNA not enrolled)
     const adminPasskeyBtn = document.getElementById('admin-passkey-btn');
-    if(adminPasskeyBtn) {
+    if (adminPasskeyBtn) {
         adminPasskeyBtn.addEventListener('click', async () => {
             const regVal = regNumberInput.value.trim();
             const passkey = document.getElementById('admin-emergency-passkey').value;
-            if(!passkey) { showMessage(errorMessage, 'ERROR: Enter your admin passkey.'); return; }
-            
+            if (!passkey) { showMessage(errorMessage, 'ERROR: Enter your admin passkey.'); return; }
+
             adminPasskeyBtn.textContent = 'AUTHENTICATING...';
             try {
                 const res = await fetch('/api/auth', {
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ registration_id: regVal, passkey })
                 });
                 const data = await res.json();
-                if(data.success && data.user.role === 'ADMIN') {
+                if (data.success && data.user.role === 'ADMIN') {
                     sessionStorage.setItem('gub_admin_auth', 'true');
                     sessionStorage.setItem('gub_student_id', regVal);
                     sessionStorage.setItem('gub_user_role', 'ADMIN');
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage(errorMessage, data.error || 'ACCESS DENIED.');
                     adminPasskeyBtn.textContent = 'EMERGENCY ACCESS';
                 }
-            } catch(e) {
+            } catch (e) {
                 showMessage(errorMessage, 'CONNECTION FAILED.');
                 adminPasskeyBtn.textContent = 'EMERGENCY ACCESS';
             }
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         forgotPasswordContainer.classList.remove('hidden');
         submitBtn.classList.remove('hidden'); submitBtn.textContent = 'INITIATE_UPLINK'; hideMessages();
         const pwdLabel = document.getElementById('password-label');
-        if(pwdLabel) pwdLabel.innerText = 'PASSKEY (STUDENT CLEARANCE)';
+        if (pwdLabel) pwdLabel.innerText = 'PASSKEY (STUDENT CLEARANCE)';
         document.body.classList.remove('admin-mode');
         regNumberInput.value = ''; // clear to reset state
     });
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         forgotPasswordContainer.classList.add('hidden');
         submitBtn.classList.remove('hidden'); submitBtn.textContent = 'SUBMIT_REQUEST'; hideMessages();
         const pwdLabel = document.getElementById('password-label');
-        if(pwdLabel) pwdLabel.innerText = 'CREATE YOUR PASSKEY';
+        if (pwdLabel) pwdLabel.innerText = 'CREATE YOUR PASSKEY';
     });
 
     authForm.addEventListener('submit', async (e) => {
@@ -317,21 +317,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isLoginMode) {
                 const passwordVal = document.getElementById('password').value;
                 if (passwordVal === '') { showMessage(errorMessage, "ERROR 401: Passkey cannot be empty."); return; }
-                
+
                 const response = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ registration_id: regVal, passkey: passwordVal })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     // Save the ID in temporary browser memory so the Dashboard knows who we are!
                     sessionStorage.setItem('gub_student_id', data.user.id);
                     sessionStorage.setItem('gub_student_name', data.user.name || data.user.id);
                     sessionStorage.setItem('gub_user_role', data.user.role);
-                    
+
                     showMessage(successMessage, "AUTH GRANTED. Welcome " + data.user.name);
                     setTimeout(() => {
                         if (data.user.role === 'ADMIN' || data.user.role === 'TEACHER') {
@@ -350,12 +350,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fullNameVal = document.getElementById('student-fullname').value.trim();
                 const studentPasskey = document.getElementById('password').value;
                 const confirmPasskey = document.getElementById('confirm-password').value;
-                
+
                 if (emailVal === '') { showMessage(errorMessage, "ERROR: Email Address required for notifications."); return; }
                 if (fullNameVal === '') { showMessage(errorMessage, "ERROR: Full Name is required."); return; }
                 if (studentPasskey === '') { showMessage(errorMessage, "ERROR: You must define a Passkey."); return; }
                 if (studentPasskey !== confirmPasskey) { showMessage(errorMessage, "CRITICAL ERROR: Passkeys do not match. Verify your input."); return; }
-                
+
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     showMessage(successMessage, data.message);
                     authForm.reset();
@@ -379,11 +379,11 @@ document.addEventListener('DOMContentLoaded', () => {
     forgotPasswordBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         hideMessages();
-        
+
         const regVal = regNumberInput.value.trim();
-        if (!regNumberRegex.test(regVal)) { 
-            showMessage(errorMessage, "ERROR: Please enter a valid REGISTRATION_ID above first."); 
-            return; 
+        if (!regNumberRegex.test(regVal)) {
+            showMessage(errorMessage, "ERROR: Please enter a valid REGISTRATION_ID above first.");
+            return;
         }
 
         forgotPasswordBtn.textContent = '[ TRANSMITTING... ]';
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ registration_id: regVal })
             });
             const data = await response.json();
-            
+
             if (response.ok) {
                 showMessage(successMessage, data.message || "A new passkey has been transmitted to your email.");
             } else {
