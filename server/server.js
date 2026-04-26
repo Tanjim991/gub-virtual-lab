@@ -555,4 +555,20 @@ app.get('/api/announcements', async (req, res) => {
 // Start Server
 app.listen(PORT, () => {
     console.log(`[SYS] SERVER ONLINE ON PORT ${PORT}`);
+
+    // ============================================================
+    // SELF-PING: Keep Render free tier awake (pings every 14 min)
+    // Render sleeps after 15 min of inactivity — we prevent that!
+    // ============================================================
+    const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    
+    setInterval(async () => {
+        try {
+            await fetch(`${SELF_URL}/api/dashboard-stats`);
+            console.log('[KEEPALIVE] Self-ping successful.');
+        } catch (e) {
+            console.log('[KEEPALIVE] Self-ping failed (will retry):', e.message);
+        }
+    }, 14 * 60 * 1000); // Every 14 minutes
 });
+
