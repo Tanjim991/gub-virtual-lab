@@ -75,12 +75,15 @@ app.post('/api/register', async (req, res) => {
     if (!regCheck.test(registration_id)) return res.status(400).json({ error: "Invalid registration format." });
     if (!email || !email.includes('@')) return res.status(400).json({ error: "A valid email address is required." });
     if (!passkey) return res.status(400).json({ error: "Passkey is required." });
+    // BUG 7 FIX: Validate full_name server-side
+    const safeName = (full_name || '').trim();
+    if (safeName.length < 2) return res.status(400).json({ error: "Full name must be at least 2 characters." });
 
     const hashedPass = bcrypt.hashSync(passkey, 10);
 
     const { error } = await supabase.from('users').insert({
         registration_id,
-        full_name: full_name || email.split('@')[0],
+        full_name: safeName,
         email,
         passkey: hashedPass,
         role: 'STUDENT',
@@ -141,9 +144,11 @@ app.post('/api/enroll-face', async (req, res) => {
 // 6. GET ADMIN FACE DNA
 // ============================================================
 app.get('/api/get-admin-face', async (req, res) => {
+    // BUG 10 FIX: Use env variable or query by role instead of hardcoded ID
+    const adminId = process.env.ADMIN_ID || '251-013-001';
     const { data, error } = await supabase.from('users')
         .select('face_descriptor')
-        .eq('registration_id', '251-013-001')
+        .eq('registration_id', adminId)
         .single();
     if (error || !data || !data.face_descriptor) return res.status(404).json({ error: "No Face DNA found." });
     res.json({ success: true, face_descriptor: JSON.parse(data.face_descriptor) });
@@ -153,8 +158,9 @@ app.get('/api/get-admin-face', async (req, res) => {
 // 7. GET ACTIVE TASKS (For Student Board)
 // ============================================================
 app.get('/api/active-tasks', async (req, res) => {
+    // BUG 1 FIX: Include deadline in response so student dashboard can show it
     const { data, error } = await supabase.from('tasks')
-        .select('id, title, reward_exp')
+        .select('id, title, reward_exp, deadline')
         .eq('status', 'ACTIVE')
         .order('id', { ascending: false });
     if (error) return res.status(500).json({ error: "Failed to fetch tasks" });
@@ -165,8 +171,9 @@ app.get('/api/active-tasks', async (req, res) => {
 // 8. GET LEADERBOARD
 // ============================================================
 app.get('/api/leaderboard', async (req, res) => {
+    // BUG 4 FIX: Include full_name so leaderboard shows real names
     const { data, error } = await supabase.from('users')
-        .select('registration_id, exp_points, connection_status')
+        .select('registration_id, full_name, exp_points, connection_status')
         .eq('role', 'STUDENT')
         .eq('status', 'ACTIVE')
         .order('exp_points', { ascending: false })
@@ -285,7 +292,25 @@ app.post('/api/create-task', async (req, res) => {
 // ============================================================
 app.post('/api/submit-task', async (req, res) => {
     const { registration_id, task_id, code } = req.body;
-    const { error } = await supabase.from('submissions').insert({ registration_id, task_id, code, status: 'PENDING' });
+    if (!registration_id || !task_id || !code || code.trim().length === 0) {
+        return res.status(400).json({ error: "Missing required fields." });
+    }
+    // BUG 9 FIX: Verify task exists and is ACTIVE
+    const { data: task, error: taskErr } = await supabase.from('tasks')
+        .select('id').eq('id', task_id).eq('status', 'ACTIVE').single();
+    if (taskErr || !task) return res.status(404).json({ error: "Mission not found or no longer active." });
+
+    // BUG 2 FIX: Prevent duplicate submissions for same task
+    const { data: existing } = await supabase.from('submissions')
+        .select('id, status').eq('registration_id', registration_id).eq('task_id', task_id).single();
+    if (existing) {
+        if (existing.status === 'PENDING') return res.status(409).json({ error: "Already submitted. Awaiting grading." });
+        if (existing.status === 'PASSED') return res.status(409).json({ error: "Already PASSED this mission!" });
+        // FAILED → allow resubmission
+        await supabase.from('submissions').update({ code: code.trim(), status: 'PENDING' }).eq('id', existing.id);
+        return res.json({ success: true, message: "RESUBMISSION ACCEPTED. Awaiting review." });
+    }
+    const { error } = await supabase.from('submissions').insert({ registration_id, task_id, code: code.trim(), status: 'PENDING' });
     if (error) return res.status(500).json({ error: "Database failed to save submission." });
     console.log(`[SYS] Received code from ${registration_id} for mission #${task_id}`);
     res.json({ success: true, message: "CODE TRANSMITTED SUCCESSFULLY." });
@@ -313,6 +338,13 @@ app.get('/api/pending-submissions', async (req, res) => {
 // ============================================================
 app.post('/api/grade-submission', async (req, res) => {
     const { submission_id, action } = req.body;
+
+    // BUG 3 FIX: Prevent double-grading (EXP awarded twice)
+    const { data: alreadyGraded } = await supabase.from('submissions')
+        .select('status').eq('id', submission_id).single();
+    if (alreadyGraded && alreadyGraded.status !== 'PENDING') {
+        return res.status(409).json({ error: `Already graded as ${alreadyGraded.status}. Cannot re-grade.` });
+    }
 
     const { data: sub, error: fetchErr } = await supabase.from('submissions')
         .select('registration_id, tasks(title, reward_exp)')
@@ -549,8 +581,9 @@ app.get('/api/admin-directory', async (req, res) => {
 // ============================================================
 app.get('/api/student-profile/:id', async (req, res) => {
     const id = req.params.id;
+    // BUG 5 FIX: Include full_name so profile can display real name
     const { data: userRow, error } = await supabase.from('users')
-        .select('exp_points')
+        .select('exp_points, full_name')
         .eq('registration_id', id)
         .single();
     if (error || !userRow) return res.status(404).json({ error: "User not found" });
@@ -560,7 +593,7 @@ app.get('/api/student-profile/:id', async (req, res) => {
         .eq('registration_id', id)
         .eq('status', 'PASSED');
 
-    res.json({ exp: userRow.exp_points || 0, missionsCleared: clearedCount || 0 });
+    res.json({ exp: userRow.exp_points || 0, missionsCleared: clearedCount || 0, fullName: userRow.full_name || id });
 });
 
 // ============================================================
@@ -635,18 +668,24 @@ app.post('/api/change-password', async (req, res) => {
     res.json({ success: true, message: "PASSKEY UPDATED SUCCESSFULLY." });
 });
 
-// ============================================================
-// 27. SEND CHAT MESSAGE
-// ============================================================
+// BUG 8 FIX: In-memory rate limiter — max 5 messages per 10 seconds per user
+const chatRateLimit = new Map();
 app.post('/api/send-message', async (req, res) => {
     const { sender_id, sender_name, content } = req.body;
     if (!sender_id || !content || content.trim().length === 0) return res.status(400).json({ error: "Empty message." });
     if (content.length > 500) return res.status(400).json({ error: "Message too long (max 500 chars)." });
 
+    const now = Date.now();
+    const userHistory = chatRateLimit.get(sender_id) || [];
+    const recent = userHistory.filter(t => now - t < 10000); // last 10 seconds
+    if (recent.length >= 5) return res.status(429).json({ error: "Too many messages. Wait a moment." });
+    chatRateLimit.set(sender_id, [...recent, now]);
+
     const { error } = await supabase.from('messages').insert({ sender_id, sender_name, content: content.trim() });
     if (error) return res.status(500).json({ error: "Failed to send message." });
     res.json({ success: true });
 });
+
 
 // ============================================================
 // 28. GET CHAT MESSAGES (last 50)

@@ -125,6 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('profile-exp').textContent = data.exp;
                 document.getElementById('profile-missions').textContent = data.missionsCleared;
                 document.getElementById('profile-rank').textContent = getRank(data.exp);
+                // BUG 5 FIX: Show student's real name in sidebar and profile header
+                const nameEl = document.getElementById('student-display-name');
+                const nameProfileEl = document.getElementById('student-display-name-profile');
+                const displayName = data.fullName ? data.fullName.toUpperCase() : sId;
+                if (nameEl) nameEl.textContent = displayName;
+                if (nameProfileEl) nameProfileEl.textContent = displayName;
 
                 // Render badges
                 const badgeContainer = document.getElementById('badge-container');
@@ -177,18 +183,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Leaderboard
+        // Leaderboard - BUG 4 FIX: Show real name + [YOU] marker
         fetch('/api/leaderboard').then(r => r.json()).then(data => {
             const table = document.getElementById('leaderboard-table');
-            const header = '<tr><th>RANK</th><th>USER_NODE</th><th>EXP_POINTS</th><th>STATUS</th></tr>';
+            const header = '<tr><th>RANK</th><th>HACKER_NAME</th><th>EXP_POINTS</th><th>STATUS</th></tr>';
             if (data.leaderboard && data.leaderboard.length > 0) {
                 const rows = data.leaderboard.map((user, i) => {
                     const rank = i + 1;
                     const medal = rank === 1 ? '🏆' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `[${String(rank).padStart(2,'0')}]`;
-                    const maskedId = user.registration_id.replace(/^(\d{3}-)\d{3}(-\d{3})$/, '$1***$2');
+                    const displayName = user.full_name ? user.full_name.toUpperCase() : user.registration_id.replace(/^(\d{3}-)\d{3}(-\d{3})$/, '$1***$2');
                     const statusColor = user.connection_status === 'ONLINE' ? 'var(--gub-accent)' : 'var(--text-dim)';
-                    return `<tr>
-                        <td>${medal}</td><td>${maskedId}</td>
+                    const isMe = user.registration_id === sId;
+                    return `<tr${isMe ? ' style="background:rgba(255,230,0,0.05);"' : ''}>
+                        <td>${medal}</td>
+                        <td>${displayName}${isMe ? ' <span style="color:var(--gub-yellow);font-size:0.7rem;">[YOU]</span>' : ''}</td>
                         <td>${user.exp_points}</td>
                         <td style="color:${statusColor}; font-weight:bold;">${user.connection_status}</td>
                     </tr>`;
@@ -199,20 +207,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Network Directory
+        // Network Directory - BUG 6 FIX: Only show ONLINE users
         fetch('/api/network-directory').then(r => r.json()).then(data => {
             const container = document.getElementById('directory-container');
             const countEl = document.getElementById('directory-count');
             if (data.directory) {
-                countEl.textContent = data.directory.filter(u => u.connection_status === 'ONLINE').length;
-                container.innerHTML = data.directory.map((user, i) => {
+                const onlineUsers = data.directory.filter(u => u.connection_status === 'ONLINE');
+                countEl.textContent = onlineUsers.length;
+                if (onlineUsers.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-dim); text-align:center; margin-top:20px; font-family:\'Share Tech Mono\';">No other hackers online right now.</p>';
+                    return;
+                }
+                container.innerHTML = onlineUsers.map((user) => {
                     const maskedId = user.registration_id.replace(/^(\d{3}-)\d{3}(-\d{3})$/, '$1***$2');
-                    const statusIcon = user.connection_status === 'ONLINE' ? '🟢 ONLINE' : '⚪ OFFLINE';
                     const rankBadge = getRank(user.exp_points);
-                    return `<div class="stat-card" style="border-color:var(--gub-accent);">
-                        <h3 style="color:var(--gub-accent);">${user.full_name ? user.full_name.toUpperCase() : 'UNKNOWN'}</h3>
+                    const isMe = user.registration_id === sId;
+                    return `<div class="stat-card" style="border-color:var(--gub-accent);${isMe ? ' box-shadow:0 0 12px rgba(0,240,255,0.3);' : ''}">
+                        <h3 style="color:var(--gub-accent);">${user.full_name ? user.full_name.toUpperCase() : 'UNKNOWN'}${isMe ? ' <span style="color:var(--gub-yellow);font-size:0.7rem;">[YOU]</span>' : ''}</h3>
                         <p style="color:var(--text-dim); font-family:'Share Tech Mono'; margin-top:5px;">NODE: ${maskedId}</p>
-                        <p style="color:${user.connection_status==='ONLINE'?'var(--gub-accent)':'#555'}; font-size:0.8rem; font-weight:bold; margin-top:5px;">${statusIcon}</p>
+                        <p style="color:var(--gub-accent); font-size:0.8rem; font-weight:bold; margin-top:5px;">🟢 ONLINE</p>
                         <div class="number" style="font-size:1.2rem; margin-top:10px;">EXP: ${user.exp_points}</div>
                         <p style="color:var(--gub-yellow); font-family:'Share Tech Mono'; font-size:0.75rem; margin-top:5px;">${rankBadge}</p>
                     </div>`;
