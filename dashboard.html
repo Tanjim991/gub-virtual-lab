@@ -132,10 +132,14 @@
                         <input type="text" id="task-title" class="cyber-input" placeholder="e.g., Build a Python Keylogger" style="margin-bottom: 10px;">
                         
                         <label class="scan-label" style="font-size: 0.8rem; color:var(--text-dim); margin-bottom:5px; display:block;">EXP REWARD</label>
-                        <input type="number" id="task-exp" class="cyber-input" placeholder="e.g., 500" style="margin-bottom: 15px;">
+                        <input type="number" id="task-exp" class="cyber-input" placeholder="e.g., 500" style="margin-bottom: 10px;">
+                        
+                        <label class="scan-label" style="font-size: 0.8rem; color:var(--text-dim); margin-bottom:5px; display:block;">DEADLINE (OPTIONAL)</label>
+                        <input type="datetime-local" id="task-deadline" class="cyber-input" style="margin-bottom: 15px; color:var(--gub-yellow);">
                         
                         <button class="cyber-btn" id="deploy-task-btn" style="border-color: var(--gub-yellow); color: var(--gub-yellow);">BROADCAST MISSION</button>
                         <div id="task-log" class="system-message hidden" style="margin-top: 10px; color: var(--gub-yellow); border:1px dashed var(--gub-yellow);"></div>
+
                     </div>
 
                     <!-- Active Tasks List -->

@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     // Save the ID in temporary browser memory so the Dashboard knows who we are!
                     sessionStorage.setItem('gub_student_id', data.user.id);
+                    sessionStorage.setItem('gub_student_name', data.user.name || data.user.id);
                     sessionStorage.setItem('gub_user_role', data.user.role);
                     
                     showMessage(successMessage, "AUTH GRANTED. Welcome " + data.user.name);

@@ -349,20 +349,24 @@ document.addEventListener('DOMContentLoaded', () => {
         deployTaskBtn.addEventListener('click', () => {
             const title = document.getElementById('task-title').value.trim();
             const exp = document.getElementById('task-exp').value.trim();
+            const deadline = document.getElementById('task-deadline').value;
             
-            if(title && exp) {
-                fetch('/api/create-task', {
+            if (title && exp) {
+                deployTaskBtn.textContent = 'BROADCASTING...';
+                fetch('/api/create-task-v2', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, exp })
+                    body: JSON.stringify({ title, exp, deadline: deadline || null })
                 }).then(res => res.json()).then(data => {
-                    if(data.success) {
-                        taskLog.innerHTML = '>>> SUCCESS: Mission broadcasted to all active nodes.';
+                    deployTaskBtn.textContent = 'BROADCAST MISSION';
+                    if (data.success) {
+                        taskLog.innerHTML = '>>> SUCCESS: Mission broadcasted to all active nodes.' + (deadline ? ' Deadline set.' : '');
                         taskLog.classList.remove('hidden');
                         document.getElementById('task-title').value = '';
                         document.getElementById('task-exp').value = '';
+                        document.getElementById('task-deadline').value = '';
                         loadActiveTasks();
-                        setTimeout(() => taskLog.classList.add('hidden'), 3000);
+                        setTimeout(() => taskLog.classList.add('hidden'), 4000);
                     } else {
                         taskLog.innerHTML = '>>> ERROR: ' + data.error;
                         taskLog.classList.remove('hidden');
@@ -370,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             } else {
-                taskLog.innerHTML = '>>> ERROR: Mission parameters incomplete.';
+                taskLog.innerHTML = '>>> ERROR: Mission title and EXP are required.';
                 taskLog.classList.remove('hidden');
                 setTimeout(() => taskLog.classList.add('hidden'), 3000);
             }
@@ -420,15 +424,16 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ submission_id: submissionId, action: action })
         }).then(res => res.json()).then(data => {
             const row = document.getElementById('sub-row-' + submissionId);
-            if(row) {
-                if(action === 'PASS') {
-                    row.innerHTML = '<td colspan="4" style="text-align:center; color:var(--gub-yellow); font-weight:bold;">GRADE SUBMITTED: EXP AWARDED.</td>';
+            if (row) {
+                if (action === 'PASS') {
+                    row.innerHTML = '<td colspan="4" style="text-align:center; color:var(--gub-yellow); font-weight:bold;">✅ PASSED — EXP AWARDED. Email sent to student.</td>';
                 } else {
-                    row.innerHTML = '<td colspan="4" style="text-align:center; color:var(--gub-red); font-weight:bold;">MISSION FAILED.</td>';
+                    row.innerHTML = '<td colspan="4" style="text-align:center; color:var(--gub-red); font-weight:bold;">❌ FAILED — Student notified via email.</td>';
                 }
                 setTimeout(() => {
                     loadPendingSubmissions();
                     loadLeaderboard();
+                    refreshStats();
                 }, 2000);
             }
         });

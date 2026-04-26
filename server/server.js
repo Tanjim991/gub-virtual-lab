@@ -315,7 +315,7 @@ app.post('/api/grade-submission', async (req, res) => {
     const { submission_id, action } = req.body;
 
     const { data: sub, error: fetchErr } = await supabase.from('submissions')
-        .select('registration_id, tasks(reward_exp)')
+        .select('registration_id, tasks(title, reward_exp)')
         .eq('id', submission_id)
         .single();
     if (fetchErr || !sub) return res.status(404).json({ error: "Submission not found" });
@@ -325,15 +325,56 @@ app.post('/api/grade-submission', async (req, res) => {
 
     if (action === 'PASS') {
         const rewardExp = sub.tasks?.reward_exp || 0;
-        // Increment EXP using RPC or re-fetch current value
-        const { data: userRow } = await supabase.from('users').select('exp_points').eq('registration_id', sub.registration_id).single();
+        const { data: userRow } = await supabase.from('users').select('exp_points, email, full_name').eq('registration_id', sub.registration_id).single();
         const newExp = (userRow?.exp_points || 0) + rewardExp;
         await supabase.from('users').update({ exp_points: newExp }).eq('registration_id', sub.registration_id);
+
+        // Send PASS email to student
+        if (userRow?.email && process.env.EMAIL_USER) {
+            const transporter = createTransporter();
+            transporter.sendMail({
+                from: `"GUB Gatekeeper Protocol" <${process.env.EMAIL_USER}>`,
+                to: userRow.email,
+                subject: 'GUB Cyber-Lab // MISSION PASSED ✅',
+                html: `<div style="font-family:monospace; background:#000; color:#00f0ff; padding:20px;">
+                    <h2 style="color:#00ff88;">[ MISSION CLEARED ]</h2>
+                    <p>Greetings Hacker <strong style="color:#ffcc00;">${userRow.full_name || sub.registration_id}</strong>,</p>
+                    <div style="background:rgba(0,255,136,0.1); border:1px dashed #00ff88; padding:15px; margin:20px 0;">
+                        <h3 style="color:#fff; margin-top:0;">MISSION: ${sub.tasks?.title || 'Unknown'}</h3>
+                        <p style="color:#00ff88; font-size:1.2rem; margin-bottom:0;">+${rewardExp} EXP AWARDED 🎯</p>
+                        <p style="color:#ffcc00;">NEW TOTAL: ${newExp} EXP</p>
+                    </div>
+                    <p>Keep pushing limits. The Gatekeeper is watching.</p>
+                </div>`
+            }).catch(e => console.error('[GRADE EMAIL ERROR]', e.message));
+        }
+
         return res.json({ success: true, message: "EXP AWARDED SUCCESSFULLY." });
+    }
+
+    // FAIL path — notify student
+    const { data: userRow } = await supabase.from('users').select('email, full_name').eq('registration_id', sub.registration_id).single();
+    if (userRow?.email && process.env.EMAIL_USER) {
+        const transporter = createTransporter();
+        transporter.sendMail({
+            from: `"GUB Gatekeeper Protocol" <${process.env.EMAIL_USER}>`,
+            to: userRow.email,
+            subject: 'GUB Cyber-Lab // MISSION FAILED ❌',
+            html: `<div style="font-family:monospace; background:#000; color:#00f0ff; padding:20px;">
+                <h2 style="color:#ff2e4d;">[ MISSION FAILED ]</h2>
+                <p>Greetings Hacker <strong style="color:#ffcc00;">${userRow.full_name || sub.registration_id}</strong>,</p>
+                <div style="background:rgba(255,0,50,0.1); border:1px dashed #ff2e4d; padding:15px; margin:20px 0;">
+                    <h3 style="color:#fff; margin-top:0;">MISSION: ${sub.tasks?.title || 'Unknown'}</h3>
+                    <p style="color:#ff2e4d; margin-bottom:0;">STATUS: FAILED — No EXP awarded.</p>
+                </div>
+                <p>Analyze your approach and resubmit. Failure is part of the process.</p>
+            </div>`
+        }).catch(e => console.error('[GRADE EMAIL ERROR]', e.message));
     }
 
     res.json({ success: true, message: "SUBMISSION FAILED." });
 });
+
 
 // ============================================================
 // 15. PROMOTE USER (Super Admin)
