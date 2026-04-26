@@ -260,10 +260,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ registration_id: regVal, passkey })
                 });
                 const data = await res.json();
-                if (data.success && data.user.role === 'ADMIN') {
+                if (data.success && (data.user.role === 'ADMIN' || data.user.role === 'TEACHER')) {
                     sessionStorage.setItem('gub_admin_auth', 'true');
                     sessionStorage.setItem('gub_student_id', regVal);
-                    sessionStorage.setItem('gub_user_role', 'ADMIN');
+                    sessionStorage.setItem('gub_student_name', data.user.name || regVal);
+                    sessionStorage.setItem('gub_user_role', data.user.role);
                     adminPasskeyBtn.textContent = 'ACCESS GRANTED — REDIRECTING...';
                     adminPasskeyBtn.style.borderColor = 'var(--gub-accent)';
                     adminPasskeyBtn.style.color = 'var(--gub-accent)';
