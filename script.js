@@ -284,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tabLogin.classList.add('active'); tabRequest.classList.remove('active');
         emailGroup.classList.add('hidden'); passwordGroup.classList.remove('hidden'); biometricGroup.classList.add('hidden');
         confirmPasswordGroup.classList.add('hidden');
+        document.getElementById('name-group').classList.add('hidden');
         forgotPasswordContainer.classList.remove('hidden');
         submitBtn.classList.remove('hidden'); submitBtn.textContent = 'INITIATE_UPLINK'; hideMessages();
         const pwdLabel = document.getElementById('password-label');
@@ -297,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tabRequest.classList.add('active'); tabLogin.classList.remove('active');
         emailGroup.classList.remove('hidden'); passwordGroup.classList.remove('hidden'); biometricGroup.classList.add('hidden');
         confirmPasswordGroup.classList.remove('hidden');
+        document.getElementById('name-group').classList.remove('hidden');
         forgotPasswordContainer.classList.add('hidden');
         submitBtn.classList.remove('hidden'); submitBtn.textContent = 'SUBMIT_REQUEST'; hideMessages();
         const pwdLabel = document.getElementById('password-label');
@@ -345,17 +347,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else {
                 const emailVal = document.getElementById('student-email').value.trim();
+                const fullNameVal = document.getElementById('student-fullname').value.trim();
                 const studentPasskey = document.getElementById('password').value;
                 const confirmPasskey = document.getElementById('confirm-password').value;
                 
                 if (emailVal === '') { showMessage(errorMessage, "ERROR: Email Address required for notifications."); return; }
+                if (fullNameVal === '') { showMessage(errorMessage, "ERROR: Full Name is required."); return; }
                 if (studentPasskey === '') { showMessage(errorMessage, "ERROR: You must define a Passkey."); return; }
                 if (studentPasskey !== confirmPasskey) { showMessage(errorMessage, "CRITICAL ERROR: Passkeys do not match. Verify your input."); return; }
                 
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ registration_id: regVal, full_name: emailVal.split('@')[0], email: emailVal, passkey: studentPasskey })
+                    body: JSON.stringify({ registration_id: regVal, full_name: fullNameVal, email: emailVal, passkey: studentPasskey })
                 });
 
                 const data = await response.json();
